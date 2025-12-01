@@ -1,7 +1,0 @@
-{
-  "name": "OceanGuard Hazard Watch",
-  "description": "An application for reporting, tracking, and analyzing maritime hazards in real-time to protect our oceans.",
-  "requestFramePermissions": [
-    "geolocation"
-  ]
-}
