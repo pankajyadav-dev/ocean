@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { HomePage } from './components/HomePage';
 import { MapPage } from './components/MapPage';
 import { NewsFeedPage } from './components/NewsFeedPage';
@@ -8,52 +9,35 @@ import { ReportHazardWizard } from './components/ReportHazardWizard';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { ProfilePage } from './components/ProfilePage';
-import { Page, type User } from './types';
+import { type User } from './types';
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>(() => {
-    // Restore page from localStorage on app load
-    const savedPage = localStorage.getItem('currentPage');
-    return savedPage ? (savedPage as Page) : Page.HOME;
-  });
+  const navigate = useNavigate();
   const [isReporting, setIsReporting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for existing session
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     if (storedToken && storedUser) {
-      setToken(storedToken);
       setUser(JSON.parse(storedUser));
     }
   }, []);
 
-  // Persist current page to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('currentPage', currentPage);
-  }, [currentPage]);
-
-  const handleNavigate = (page: Page) => {
-    setCurrentPage(page);
-  };
-
-  const handleLogin = (email: string, authToken: string) => {
+  const handleLogin = (_email: string, _authToken: string) => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    setToken(authToken);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    setToken(null);
-    setCurrentPage(Page.HOME);
+    navigate('/');
   };
 
   const handleReportSubmit = () => {
@@ -61,52 +45,21 @@ const App: React.FC = () => {
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 5000);
     // Trigger a page refresh or data reload if on map page
-    if (currentPage === Page.MAP) {
-      // The MapPage will auto-refresh due to its polling mechanism
-      window.dispatchEvent(new Event('hazardReportSubmitted'));
-    }
+    window.dispatchEvent(new Event('hazardReportSubmitted'));
   };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case Page.HOME:
-        return <HomePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-      case Page.MAP:
-        return <MapPage onReportHazard={() => setIsReporting(true)} onNavigate={handleNavigate} user={user} />;
-      case Page.NEWS:
-        return <NewsFeedPage onNavigate={handleNavigate} user={user} />;
-      case Page.ANALYTICS:
-        return <AnalyticsPage onNavigate={handleNavigate} user={user} />;
-      case Page.LOGIN:
-        return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case Page.SIGNUP:
-        return <SignupPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case Page.PROFILE:
-        return <ProfilePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-      default:
-        return <HomePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-    }
-  };
-
-  // For hash-based routing simulation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').toUpperCase();
-      if (hash in Page) {
-        setCurrentPage(Page[hash as keyof typeof Page]);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Initial check
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
 
   return (
     <>
-      {renderPage()}
+      <Routes>
+        <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
+        <Route path="/map" element={<MapPage onReportHazard={() => setIsReporting(true)} user={user} />} />
+        <Route path="/news" element={<NewsFeedPage user={user} />} />
+        <Route path="/analytics" element={<AnalyticsPage user={user} />} />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route path="/signup" element={<SignupPage onLogin={handleLogin} />} />
+        <Route path="/profile" element={<ProfilePage user={user} onLogout={handleLogout} />} />
+      </Routes>
+
       <ReportHazardWizard
         isOpen={isReporting}
         onClose={() => setIsReporting(false)}

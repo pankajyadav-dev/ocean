@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Page } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
 
 interface LoginPageProps {
-  onNavigate: (page: Page) => void;
   onLogin: (email: string, token: string) => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,7 +23,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user.email, data.token);
-      onNavigate(Page.HOME);
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
     } finally {
@@ -38,7 +38,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
         <div className="bg-slate-800/90 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl p-8">
           <div className="flex items-center justify-center mb-8">
             <svg className="w-12 h-12 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z" />
             </svg>
             <span className="text-2xl font-bold text-white ml-2">OceanGuard</span>
           </div>
@@ -106,7 +106,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
             <p className="text-slate-400">
               Don't have an account?{' '}
               <button
-                onClick={() => onNavigate(Page.SIGNUP)}
+                onClick={() => navigate('/signup')}
                 className="text-blue-400 hover:text-blue-300 font-semibold"
               >
                 Sign up
@@ -116,7 +116,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
 
           <div className="mt-4 text-center">
             <button
-              onClick={() => onNavigate(Page.HOME)}
+              onClick={() => navigate('/')}
               className="text-slate-400 hover:text-white text-sm"
             >
               ← Back to Home
@@ -127,4 +127,3 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLogin }) => 
     </div>
   );
 };
-

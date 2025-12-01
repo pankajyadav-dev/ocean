@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Page, type User } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { type User } from '../types';
 import { api } from '../utils/api';
 
 interface ProfilePageProps {
-  onNavigate: (page: Page) => void;
   user: User | null;
   onLogout: () => void;
 }
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLogout }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [userReports, setUserReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -20,7 +21,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) return;
-      
+
       try {
         setLoading(true);
         const response = await api.getUserProfile();
@@ -34,8 +35,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
           setUserReports(response.data);
           const total = response.data.length;
           const verified = response.data.filter((r: any) => r.verified).length;
-          const avgSev = response.data.length > 0 
-            ? response.data.reduce((sum: number, r: any) => sum + r.severity, 0) / response.data.length 
+          const avgSev = response.data.length > 0
+            ? response.data.reduce((sum: number, r: any) => sum + r.severity, 0) / response.data.length
             : 0;
           setStats({
             totalReports: total,
@@ -59,7 +60,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
         <div className="text-center">
           <p className="text-slate-400 mb-4">Please login to view your profile</p>
           <button
-            onClick={() => onNavigate(Page.LOGIN)}
+            onClick={() => navigate('/login')}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
           >
             Login
@@ -75,12 +76,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <svg className="w-8 h-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z" />
             </svg>
             <span className="text-xl font-bold text-white">OceanGuard</span>
           </div>
           <div className="flex items-center space-x-4">
-            <button onClick={() => onNavigate(Page.HOME)} className="text-slate-300 hover:text-white">
+            <button onClick={() => navigate('/')} className="text-slate-300 hover:text-white">
               Home
             </button>
             <button onClick={onLogout} className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg">
@@ -137,7 +138,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
               <div className="text-center py-12 text-slate-400">
                 <p>You haven't submitted any reports yet.</p>
                 <button
-                  onClick={() => onNavigate(Page.MAP)}
+                  onClick={() => navigate('/map')}
                   className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
                 >
                   Report Your First Hazard
@@ -155,7 +156,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, user, onLo
                         )}
                       </div>
                       <p className="text-sm text-slate-400">
-                        {report.location.lat.toFixed(4)}°, {report.location.lng.toFixed(4)}° • 
+                        {report.location.lat.toFixed(4)}°, {report.location.lng.toFixed(4)}° •
                         Severity: {report.severity}/10
                       </p>
                       {report.description && (

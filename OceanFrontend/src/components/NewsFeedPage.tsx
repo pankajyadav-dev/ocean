@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Page, type User, type NewsArticle } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { type User, type NewsArticle } from '../types';
 import { api } from '../utils/api';
 
 interface NewsFeedPageProps {
-  onNavigate: (page: Page) => void;
-  user: User | null;
+    user: User | null;
 }
 
 const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
@@ -14,7 +14,7 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
             return (
                 <span className="bg-purple-600/90 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
                     </svg>
                     External News
                 </span>
@@ -26,7 +26,7 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
                 return (
                     <span className="bg-green-600/90 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                         Admin Verified
                     </span>
@@ -35,8 +35,8 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
                 return (
                     <span className="bg-blue-600/90 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 7H7v6h6V7z"/>
-                            <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd"/>
+                            <path d="M13 7H7v6h6V7z" />
+                            <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd" />
                         </svg>
                         AI Verified
                     </span>
@@ -45,7 +45,7 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
                 return (
                     <span className="bg-yellow-600/90 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         Unverified
                     </span>
@@ -56,9 +56,9 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
     return (
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden group hover:border-blue-500/50 transition-all">
             <div className="relative">
-                <img 
-                    src={article.imageUrl} 
-                    alt={article.title} 
+                <img
+                    src={article.imageUrl}
+                    alt={article.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                         e.currentTarget.src = 'https://picsum.photos/seed/news/400/300';
@@ -79,16 +79,16 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
             <div className="p-4">
                 <p className="text-slate-300 text-sm">{article.summary}</p>
                 {article.sourceUrl && (
-                    <a 
-                        href={article.sourceUrl} 
-                        target="_blank" 
+                    <a
+                        href={article.sourceUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:text-blue-300 text-xs mt-2 inline-flex items-center gap-1"
                     >
                         Read full article
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/>
-                            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/>
+                            <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                            <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                         </svg>
                     </a>
                 )}
@@ -97,7 +97,8 @@ const NewsCard: React.FC<{ article: NewsArticle }> = ({ article }) => {
     );
 };
 
-export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
+export const NewsFeedPage: React.FC<NewsFeedPageProps> = () => {
+    const navigate = useNavigate();
     const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [hazardTypeFilter, setHazardTypeFilter] = useState<string>('all');
@@ -117,12 +118,12 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                 const category = hazardTypeFilter !== 'all' ? hazardTypeFilter : undefined;
                 const source = sourceFilter !== 'all' ? sourceFilter : undefined;
                 const verificationStatus = verificationFilter !== 'all' ? verificationFilter : undefined;
-                const response = await api.getNewsArticles({ 
-                    category, 
+                const response = await api.getNewsArticles({
+                    category,
                     source,
                     verificationStatus,
-                    limit: 100, 
-                    sortBy 
+                    limit: 100,
+                    sortBy
                 });
                 // Transform backend data
                 const transformedArticles: NewsArticle[] = response.data.map((article: any) => {
@@ -131,7 +132,7 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                     if (imageUrl && !imageUrl.startsWith('http') && imageUrl.startsWith('/uploads')) {
                         imageUrl = `http://localhost:3000${imageUrl}`;
                     }
-                    
+
                     return {
                         id: article._id || article.id,
                         title: article.title,
@@ -191,29 +192,29 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
     };
 
     // Get unique categories
-    const categories = newsArticles.length > 0 
-      ? ['all', ...Array.from(new Set(newsArticles.map(a => a.category)))]
-      : ['all', 'Oil Spill', 'Debris', 'Pollution', 'Climate', 'Weather', 'Geological', 'Other'];
+    const categories = newsArticles.length > 0
+        ? ['all', ...Array.from(new Set(newsArticles.map(a => a.category)))]
+        : ['all', 'Oil Spill', 'Debris', 'Pollution', 'Climate', 'Weather', 'Geological', 'Other'];
 
     return (
         <div className="min-h-screen bg-slate-900" style={{ backgroundImage: "url('https://picsum.photos/seed/newsbg/1920/1080')", backgroundAttachment: 'fixed', backgroundSize: 'cover' }}>
             <div className="bg-slate-900/80 backdrop-blur-sm min-h-screen">
                 {/* Header */}
-                 <header className="py-4">
+                <header className="py-4">
                     <div className="container mx-auto px-6 flex justify-between items-center">
-                    <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onNavigate(Page.HOME)}>
-                        <svg className="w-8 h-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z"/></svg>
-                        <span className="text-xl font-bold text-white">Ocean Hazards</span>
-                    </div>
-                    <nav className="flex items-center space-x-6 text-sm">
-                        <a href="#" onClick={(e) => { e.preventDefault(); onNavigate(Page.MAP) }} className="text-slate-300 hover:text-white">Map</a>
-                        <a href="#" className="text-slate-300 hover:text-white">Reports</a>
-                        <a href="#" className="text-white font-semibold">News</a>
-                    </nav>
-                    <div className="flex items-center space-x-4">
-                         <button className="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors text-white">Login</button>
-                         <img src="https://picsum.photos/seed/user/40/40" alt="User" className="w-10 h-10 rounded-full border-2 border-slate-600"/>
-                    </div>
+                        <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
+                            <svg className="w-8 h-8 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 4c-2.31 0-4.43.9-6 2.37L12 13.5l6-7.13C16.43 4.9 14.31 4 12 4z" /></svg>
+                            <span className="text-xl font-bold text-white">Ocean Hazards</span>
+                        </div>
+                        <nav className="flex items-center space-x-6 text-sm">
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/map') }} className="text-slate-300 hover:text-white">Map</a>
+                            <a href="#" className="text-slate-300 hover:text-white">Reports</a>
+                            <a href="#" className="text-white font-semibold">News</a>
+                        </nav>
+                        <div className="flex items-center space-x-4">
+                            <button className="px-5 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors text-white">Login</button>
+                            <img src="https://picsum.photos/seed/user/40/40" alt="User" className="w-10 h-10 rounded-full border-2 border-slate-600" />
+                        </div>
                     </div>
                 </header>
 
@@ -247,31 +248,28 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                         <div className="flex gap-2 mb-6 border-b border-slate-600 pb-4">
                             <button
                                 onClick={() => { setSourceFilter('all'); handleFilterChange(); }}
-                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${
-                                    sourceFilter === 'all'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                }`}
+                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${sourceFilter === 'all'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                    }`}
                             >
                                 All News ({newsArticles.length})
                             </button>
                             <button
                                 onClick={() => { setSourceFilter('hazard-report'); handleFilterChange(); }}
-                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${
-                                    sourceFilter === 'hazard-report'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                }`}
+                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${sourceFilter === 'hazard-report'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                    }`}
                             >
                                 Hazard Reports ({newsArticles.filter(a => a.source === 'hazard-report').length})
                             </button>
                             <button
                                 onClick={() => { setSourceFilter('rss-feed'); handleFilterChange(); }}
-                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${
-                                    sourceFilter === 'rss-feed'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                }`}
+                                className={`px-6 py-2 rounded-t-lg font-semibold transition-colors ${sourceFilter === 'rss-feed'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                    }`}
                             >
                                 External News ({newsArticles.filter(a => a.source === 'rss-feed').length})
                             </button>
@@ -279,7 +277,7 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
 
                         {/* Filters Row */}
                         <div className="flex flex-wrap gap-4 items-center">
-                            <select 
+                            <select
                                 value={hazardTypeFilter}
                                 onChange={(e) => { setHazardTypeFilter(e.target.value); handleFilterChange(); }}
                                 className="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -290,7 +288,7 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                                 ))}
                             </select>
 
-                            <select 
+                            <select
                                 value={verificationFilter}
                                 onChange={(e) => { setVerificationFilter(e.target.value); handleFilterChange(); }}
                                 className="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -301,7 +299,7 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                                 <option value="unverified">Unverified</option>
                             </select>
 
-                            <select 
+                            <select
                                 value={sortBy}
                                 onChange={(e) => { setSortBy(e.target.value); handleFilterChange(); }}
                                 className="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -326,7 +324,7 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                                 ) : (
                                     <>
                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
+                                            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                                         </svg>
                                         Sync RSS Feeds
                                     </>
@@ -348,8 +346,8 @@ export const NewsFeedPage: React.FC<NewsFeedPageProps> = ({ onNavigate }) => {
                             {/* News Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {displayedArticles.map(article => (
-                                    <NewsCard 
-                                        key={article.id} 
+                                    <NewsCard
+                                        key={article.id}
                                         article={article}
                                     />
                                 ))}
