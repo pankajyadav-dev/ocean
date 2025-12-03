@@ -12,8 +12,16 @@ interface MapPageProps {
   user: User | null;
 }
 
+interface LocationSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+  type: string;
+  importance: number;
+}
+
 interface HeaderProps {
-  onSearch: (query: string) => void;
+  onSearch: (lat: number, lon: number, name: string) => void;
   onNavigate: (page: Page) => void;
   user: User | null;
   onRefresh: () => void;
@@ -21,25 +29,228 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onSearch, onNavigate, user, onRefresh }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch(searchQuery);
+  // Fetch location suggestions from Nominatim API
+  const fetchLocationSuggestions = async (query: string) => {
+    if (!query.trim() || query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      
+      // Use Nominatim API with proper headers
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'OceanHazardWatch/1.0',
+            'Accept': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setSuggestions(data);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Error fetching location suggestions:', error);
+      
+      // Fallback to local geocoding data for common locations
+      const localResults = getLocalGeocodingResults(query);
+      if (localResults.length > 0) {
+        setSuggestions(localResults);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+      }
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const handleCoordinateSearch = (query: string) => {
-    // Try to parse coordinates (lat, lng or lat lng)
-    const coordMatch = query.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
-    if (coordMatch) {
-      const lat = parseFloat(coordMatch[1]);
-      const lng = parseFloat(coordMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-        onSearch(query);
-        return;
+  // Fallback local geocoding for common ocean-related locations
+  const getLocalGeocodingResults = (query: string): LocationSuggestion[] => {
+    const lowerQuery = query.toLowerCase();
+    const localData: { [key: string]: LocationSuggestion } = {
+      'pacific': {
+        display_name: 'Pacific Ocean',
+        lat: '0',
+        lon: '-160',
+        type: 'ocean',
+        importance: 0.9
+      },
+      'atlantic': {
+        display_name: 'Atlantic Ocean',
+        lat: '30',
+        lon: '-40',
+        type: 'ocean',
+        importance: 0.9
+      },
+      'indian': {
+        display_name: 'Indian Ocean',
+        lat: '-20',
+        lon: '70',
+        type: 'ocean',
+        importance: 0.9
+      },
+      'arctic': {
+        display_name: 'Arctic Ocean',
+        lat: '80',
+        lon: '0',
+        type: 'ocean',
+        importance: 0.8
+      },
+      'mediterranean': {
+        display_name: 'Mediterranean Sea',
+        lat: '35',
+        lon: '18',
+        type: 'sea',
+        importance: 0.8
+      },
+      'caribbean': {
+        display_name: 'Caribbean Sea',
+        lat: '15',
+        lon: '-75',
+        type: 'sea',
+        importance: 0.8
+      },
+      'gulf of mexico': {
+        display_name: 'Gulf of Mexico',
+        lat: '25',
+        lon: '-90',
+        type: 'gulf',
+        importance: 0.8
+      },
+      'hawaii': {
+        display_name: 'Hawaii, United States',
+        lat: '21.3',
+        lon: '-157.8',
+        type: 'state',
+        importance: 0.7
+      },
+      'florida': {
+        display_name: 'Florida, United States',
+        lat: '27.6',
+        lon: '-81.5',
+        type: 'state',
+        importance: 0.7
+      },
+      'california': {
+        display_name: 'California, United States',
+        lat: '36.7',
+        lon: '-119.7',
+        type: 'state',
+        importance: 0.7
+      },
+      'alaska': {
+        display_name: 'Alaska, United States',
+        lat: '64.2',
+        lon: '-152.0',
+        type: 'state',
+        importance: 0.7
+      },
+      'australia': {
+        display_name: 'Australia',
+        lat: '-25.0',
+        lon: '133.0',
+        type: 'country',
+        importance: 0.7
+      },
+      'japan': {
+        display_name: 'Japan',
+        lat: '36.2',
+        lon: '138.2',
+        type: 'country',
+        importance: 0.7
+      },
+      'indonesia': {
+        display_name: 'Indonesia',
+        lat: '-2.5',
+        lon: '118.0',
+        type: 'country',
+        importance: 0.7
+      },
+      'philippines': {
+        display_name: 'Philippines',
+        lat: '12.8',
+        lon: '121.7',
+        type: 'country',
+        importance: 0.7
+      },
+    };
+
+    const results: LocationSuggestion[] = [];
+    
+    // Find matching locations
+    for (const [key, value] of Object.entries(localData)) {
+      if (key.includes(lowerQuery) || value.display_name.toLowerCase().includes(lowerQuery)) {
+        results.push(value);
       }
     }
-    onSearch(query);
+
+    return results.slice(0, 5);
   };
+
+  // Debounced search handler
+  const handleSearchInputChange = (value: string) => {
+    setSearchQuery(value);
+    
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer for debounced search
+    debounceTimerRef.current = setTimeout(() => {
+      fetchLocationSuggestions(value);
+    }, 300); // 300ms debounce
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: LocationSuggestion) => {
+    const lat = parseFloat(suggestion.lat);
+    const lon = parseFloat(suggestion.lon);
+    setSearchQuery(suggestion.display_name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    onSearch(lat, lon, suggestion.display_name);
+  };
+
+  // Handle form submit
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (suggestions.length > 0) {
+      handleSuggestionClick(suggestions[0]);
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <header className="absolute top-0 left-0 right-0 z-[2000] p-2 md:p-4">
@@ -49,17 +260,50 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onNavigate, user, onRefresh }
                   <span className="hidden md:block text-base md:text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent whitespace-nowrap">Ocean Hazard Watch</span>
              </div>
              
-             <div className="flex-1 max-w-2xl">
+             <div className="flex-1 max-w-2xl" ref={searchContainerRef}>
                  <form onSubmit={handleSearch} className="relative">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-cyan-400 z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input 
                       type="text" 
                       placeholder="Search location..." 
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onBlur={() => searchQuery && handleCoordinateSearch(searchQuery)}
+                      onChange={(e) => handleSearchInputChange(e.target.value)}
+                      onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                       className="w-full bg-slate-950/80 border border-cyan-500/30 rounded-lg pl-9 md:pl-10 pr-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm md:text-base" 
+                      autoComplete="off"
                     />
+                    {isSearching && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    )}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/98 backdrop-blur-md border border-cyan-500/30 rounded-lg shadow-2xl shadow-cyan-500/20 overflow-hidden z-50 max-h-80 overflow-y-auto">
+                        {suggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="w-full text-left px-4 py-3 hover:bg-cyan-500/10 transition-colors border-b border-slate-700/50 last:border-b-0 flex items-start space-x-3 group"
+                          >
+                            <svg className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                            </svg>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white group-hover:text-cyan-300 transition-colors truncate">
+                                {suggestion.display_name}
+                              </p>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                {suggestion.type} • {parseFloat(suggestion.lat).toFixed(4)}, {parseFloat(suggestion.lon).toFixed(4)}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                  </form>
              </div>
              
@@ -526,7 +770,15 @@ export const MapPage: React.FC<MapPageProps> = ({ onReportHazard, onNavigate, us
         activeFilters.includes(report.type)
     );
 
-    const handleSearch = (query: string) => {
+    const handleSearch = (lat: number, lon: number, name: string) => {
+        // Zoom to the selected location
+        setMapCenter([lat, lon]);
+        setMapZoom(12);
+        console.log(`Navigating to: ${name} (${lat}, ${lon})`);
+    };
+
+    // Legacy coordinate search handler (keeping for backwards compatibility)
+    const handleLegacySearch = (query: string) => {
         // Try to parse coordinates
         const coordMatch = query.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
         if (coordMatch) {

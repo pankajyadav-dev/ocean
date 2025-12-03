@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { HomePage } from './components/HomePage';
 import { MapPage } from './components/MapPage';
 import { NewsFeedPage } from './components/NewsFeedPage';
@@ -13,12 +14,8 @@ import { GovernmentAlertsPage } from './components/GovernmentAlertsPage';
 import { Page, type User } from './types';
 import { io, Socket } from 'socket.io-client';
 
-const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>(() => {
-    // Restore page from localStorage on app load
-    const savedPage = localStorage.getItem('currentPage');
-    return savedPage ? (savedPage as Page) : Page.HOME;
-  });
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
   const [isReporting, setIsReporting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -89,13 +86,19 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Persist current page to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('currentPage', currentPage);
-  }, [currentPage]);
-
+  // Helper function to convert Page enum to route path
   const handleNavigate = (page: Page) => {
-    setCurrentPage(page);
+    const routes: Record<Page, string> = {
+      [Page.HOME]: '/',
+      [Page.MAP]: '/map',
+      [Page.NEWS]: '/news',
+      [Page.ANALYTICS]: '/analytics',
+      [Page.LOGIN]: '/login',
+      [Page.SIGNUP]: '/signup',
+      [Page.PROFILE]: '/profile',
+      [Page.GOVERNMENT_ALERTS]: '/government-alerts',
+    };
+    navigate(routes[page]);
   };
 
   const handleLogin = (email: string, authToken: string) => {
@@ -104,6 +107,7 @@ const App: React.FC = () => {
       setUser(JSON.parse(storedUser));
     }
     setToken(authToken);
+    navigate('/map');
   };
 
   const handleLogout = () => {
@@ -111,7 +115,7 @@ const App: React.FC = () => {
     localStorage.removeItem('user');
     setUser(null);
     setToken(null);
-    setCurrentPage(Page.HOME);
+    navigate('/');
   };
 
   const handleReportSubmit = () => {
@@ -119,54 +123,23 @@ const App: React.FC = () => {
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 5000);
     // Trigger a page refresh or data reload if on map page
-    if (currentPage === Page.MAP) {
-      // The MapPage will auto-refresh due to its polling mechanism
-      window.dispatchEvent(new Event('hazardReportSubmitted'));
-    }
+    window.dispatchEvent(new Event('hazardReportSubmitted'));
   };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case Page.HOME:
-        return <HomePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-      case Page.MAP:
-        return <MapPage onReportHazard={() => setIsReporting(true)} onNavigate={handleNavigate} user={user} />;
-      case Page.NEWS:
-        return <NewsFeedPage onNavigate={handleNavigate} user={user} />;
-      case Page.ANALYTICS:
-        return <AnalyticsPage onNavigate={handleNavigate} user={user} />;
-      case Page.LOGIN:
-        return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case Page.SIGNUP:
-        return <SignupPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case Page.PROFILE:
-        return <ProfilePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-      case Page.GOVERNMENT_ALERTS:
-        return <GovernmentAlertsPage onNavigate={handleNavigate} user={user} />;
-      default:
-        return <HomePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />;
-    }
-  };
-
-  // For hash-based routing simulation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').toUpperCase();
-      if (hash in Page) {
-        setCurrentPage(Page[hash as keyof typeof Page]);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Initial check
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
 
   return (
     <>
-      {renderPage()}
+      <Routes>
+        <Route path="/" element={<HomePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} />} />
+        <Route path="/map" element={<MapPage onReportHazard={() => setIsReporting(true)} onNavigate={handleNavigate} user={user} />} />
+        <Route path="/news" element={<NewsFeedPage onNavigate={handleNavigate} user={user} />} />
+        <Route path="/analytics" element={<AnalyticsPage onNavigate={handleNavigate} user={user} />} />
+        <Route path="/login" element={<LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />} />
+        <Route path="/signup" element={<SignupPage onNavigate={handleNavigate} onLogin={handleLogin} />} />
+        <Route path="/profile" element={user ? <ProfilePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/government-alerts" element={<GovernmentAlertsPage onNavigate={handleNavigate} user={user} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      
       <ReportHazardWizard
         isOpen={isReporting}
         onClose={() => setIsReporting(false)}
@@ -194,6 +167,14 @@ const App: React.FC = () => {
         </div>
       )}
     </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 };
 
