@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
 import hazardRoutes from './routes/hazardRoutes';
@@ -21,8 +22,9 @@ const httpServer = createServer(app);
 // Initialize Socket.io
 export const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    origin: process.env.FRONTEND_URL || '*',
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
@@ -43,9 +45,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/hazards', hazardRoutes);
 app.use('/api/news', newsRoutes);
@@ -59,10 +61,23 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ message: 'OceanGuard API is running', status: 'healthy' });
 });
 
-// 404 handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+// Serve frontend static files in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../OceanFrontend/dist');
+  
+  // Serve static files
+  app.use(express.static(frontendPath));
+  
+  // Handle React Router - send all non-API requests to index.html
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  // Development mode - API only
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
+}
 
 // Error handler
 app.use((err: any, req: Request, res: Response, next: any) => {
@@ -78,6 +93,9 @@ const startServer = async () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
       console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
       console.log(`🔌 Socket.io is ready for real-time notifications`);
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`🎨 Serving frontend from /`);
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);

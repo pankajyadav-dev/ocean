@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "oceanbackend/api/index.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "OceanFrontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "oceanbackend/api/index.ts"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "oceanbackend/uploads/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "OceanFrontend/dist/$1"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/oceanbackend/api/index.ts"
+    }
+  ]
+}
