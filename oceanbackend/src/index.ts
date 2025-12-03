@@ -1,6 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
 import hazardRoutes from './routes/hazardRoutes';
@@ -13,6 +15,25 @@ import socialMediaRoutes from './routes/socialMediaRoutes';
 dotenv.config();
 
 const app: Application = express();
+const httpServer = createServer(app);
+
+// Initialize Socket.io
+export const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Socket.io connection handler
+io.on('connection', (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+  
+  socket.on('disconnect', () => {
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -51,9 +72,10 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 const startServer = async () => {
   try {
     await connectDatabase();
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
       console.log(`📊 API Health: http://localhost:${PORT}/api/health`);
+      console.log(`🔌 Socket.io is ready for real-time notifications`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

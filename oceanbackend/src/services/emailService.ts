@@ -158,3 +158,50 @@ This is an automated notification from OceanGuard.
   }
 };
 
+/**
+ * Generic email sending function
+ * @param to - Recipient email address
+ * @param subject - Email subject
+ * @param html - HTML content of the email
+ * @returns Promise<boolean> - True if sent successfully, false otherwise
+ */
+export const sendEmail = async (to: string, subject: string, html: string): Promise<boolean> => {
+  try {
+    // Check if email service is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn('⚠️ Email service not configured - skipping email notification');
+      console.warn('   To enable email notifications, add to .env file:');
+      console.warn('   EMAIL_SERVICE=gmail');
+      console.warn('   EMAIL_USER=your-email@gmail.com');
+      console.warn('   EMAIL_PASSWORD=your-app-password');
+      return false;
+    }
+
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: `"OceanGuard Alert System" <${process.env.EMAIL_USER || 'noreply@oceanguard.com'}>`,
+      to,
+      subject,
+      html,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${to}`);
+    return true;
+  } catch (error: any) {
+    console.error(`❌ Error sending email to ${to}:`, error.message);
+    
+    if (error.message?.includes('Invalid login') || error.message?.includes('Authentication failed')) {
+      console.error('   💡 Fix: For Gmail, you need to:');
+      console.error('   1. Enable 2-factor authentication on your Google account');
+      console.error('   2. Generate an App Password at: https://myaccount.google.com/apppasswords');
+      console.error('   3. Use the App Password (16 characters) as EMAIL_PASSWORD in .env');
+      console.error('   4. Set EMAIL_SERVICE=gmail in .env');
+    } else if (error.message?.includes('Connection')) {
+      console.error('   💡 Fix: Check your network connection or SMTP settings');
+    }
+    
+    return false;
+  }
+};

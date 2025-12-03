@@ -5,6 +5,11 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  phone?: string;
+  location?: {
+    type: string;
+    coordinates: number[];
+  };
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -29,11 +34,36 @@ const UserSchema: Schema = new Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false,
   },
+  phone: {
+    type: String,
+    required: false,
+    validate: {
+      validator: function(v: string) {
+        if (!v) return true; // Allow empty/undefined
+        return /^\+?[\d\s\-()]+$/.test(v); // Basic phone validation
+      },
+      message: 'Please provide a valid phone number'
+    }
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: false
+    },
+    coordinates: {
+      type: [Number],
+      required: false
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
+
+// Create geospatial index for location-based queries
+UserSchema.index({ location: '2dsphere' });
 
 // Hash password before saving
 UserSchema.pre('save', async function (next) {

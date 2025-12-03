@@ -4,6 +4,8 @@ import { AuthRequest } from '../middleware/auth';
 import { sendHazardNotificationEmail } from '../services/emailService';
 import EmailNotification from '../models/EmailNotification';
 import NewsArticle from '../models/NewsArticle';
+import { io } from '../index';
+import { notifyNearbyUsers } from '../services/notificationService';
 
 export const createHazardReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -144,6 +146,37 @@ export const createHazardReport = async (req: AuthRequest, res: Response): Promi
     } catch (newsError: any) {
       // Don't fail the report creation if news article creation fails
       console.error('Error creating news article:', newsError);
+    }
+
+    // Emit Socket.io event for real-time notifications
+    io.emit('hazard-reported', {
+      id: hazardReport._id,
+      type: hazardReport.type,
+      location: hazardReport.location,
+      severity: hazardReport.severity,
+      description: hazardReport.description,
+      imageUrl: hazardReport.imageUrl,
+      reportedAt: hazardReport.createdAt
+    });
+    console.log(`Socket.io event emitted for hazard ${hazardReport._id}`);
+
+    // Send notifications to nearby users (within 10km)
+    try {
+      const notificationResult = await notifyNearbyUsers({
+        title: `${type} Reported Nearby`,
+        description: description || `A ${type.toLowerCase()} has been reported in your area.`,
+        location: {
+          type: 'Point',
+          coordinates: [locationObj.lng, locationObj.lat]
+        },
+        severity: severity.toString(),
+        hazardType: type
+      }, 10000); // 10km radius
+
+      console.log(`Notified ${notificationResult.notifiedCount} nearby users`);
+    } catch (notificationError: any) {
+      console.error('Error sending nearby user notifications:', notificationError);
+      // Don't fail the hazard report if notification fails
     }
 
     res.status(201).json({

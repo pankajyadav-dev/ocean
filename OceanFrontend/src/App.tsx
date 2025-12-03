@@ -8,7 +8,9 @@ import { ReportHazardWizard } from './components/ReportHazardWizard';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { ProfilePage } from './components/ProfilePage';
+import { NotificationCenter } from './components/NotificationCenter';
 import { Page, type User } from './types';
+import { io, Socket } from 'socket.io-client';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(() => {
@@ -20,6 +22,61 @@ const App: React.FC = () => {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [hazardNotifications, setHazardNotifications] = useState<any[]>([]);
+
+  // Initialize Socket.io connection
+  useEffect(() => {
+    const socketConnection = io('http://localhost:3000', {
+      transports: ['websocket', 'polling']
+    });
+
+    socketConnection.on('connect', () => {
+      console.log('✅ Connected to Socket.io server');
+    });
+
+    socketConnection.on('disconnect', () => {
+      console.log('❌ Disconnected from Socket.io server');
+    });
+
+    // Listen for hazard alerts
+    socketConnection.on('hazard-reported', (hazard: any) => {
+      console.log('🚨 New hazard reported:', hazard);
+      
+      // Add to notifications
+      setHazardNotifications(prev => [{
+        id: hazard.id,
+        type: hazard.type,
+        severity: hazard.severity,
+        location: hazard.location,
+        description: hazard.description,
+        timestamp: new Date().toISOString(),
+        read: false
+      }, ...prev]);
+
+      // Show browser notification if permission granted
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🌊 Ocean Hazard Alert', {
+          body: `${hazard.type} reported nearby - Severity: ${hazard.severity}/10`,
+          icon: '/ocean-icon.png',
+          tag: hazard.id
+        });
+      }
+    });
+
+    setSocket(socketConnection);
+
+    return () => {
+      socketConnection.disconnect();
+    };
+  }, []);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   useEffect(() => {
     // Check for existing session
@@ -111,6 +168,15 @@ const App: React.FC = () => {
         isOpen={isReporting}
         onClose={() => setIsReporting(false)}
         onSubmit={handleReportSubmit}
+      />
+      <NotificationCenter 
+        notifications={hazardNotifications}
+        onClearAll={() => setHazardNotifications([])}
+        onMarkAsRead={(id: string) => {
+          setHazardNotifications(prev => 
+            prev.map(n => n.id === id ? { ...n, read: true } : n)
+          );
+        }}
       />
       {showSuccessToast && (
         <div className="fixed top-5 right-5 z-50 bg-green-500/20 backdrop-blur-md border border-green-400 text-white px-6 py-4 rounded-xl shadow-lg flex items-center space-x-4">

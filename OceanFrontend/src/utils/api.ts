@@ -140,6 +140,13 @@ export const api = {
     return this.request<{ user: any; reports: any[]; stats: any }>('/user/profile');
   },
 
+  async updateUserProfile(data: { name?: string; email?: string; phone?: string; location?: any }) {
+    return this.request<{ user: any }>('/user/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
   // Social Media endpoints
   async getSocialMediaAnalytics(hazardsOnly: boolean = false) {
     const query = hazardsOnly ? '?hazardsOnly=true' : '';
