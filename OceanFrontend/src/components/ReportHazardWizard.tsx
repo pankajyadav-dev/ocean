@@ -128,9 +128,15 @@ export const ReportHazardWizard: React.FC<ReportHazardWizardProps> = ({ isOpen, 
   const fetchLocationName = async (lat: number, lng: number) => {
     setFetchingLocationName(true);
     try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
+        `${API_URL}/api/geocode/reverse?lat=${lat}&lon=${lng}`
       );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch location');
+      }
+      
       const data = await response.json();
       if (data.display_name) {
         setLocationName(data.display_name);
@@ -145,6 +151,7 @@ export const ReportHazardWizard: React.FC<ReportHazardWizardProps> = ({ isOpen, 
       }
     } catch (error) {
       console.error('Error fetching location name:', error);
+      // Fallback to coordinates display
       setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } finally {
       setFetchingLocationName(false);
@@ -285,6 +292,7 @@ export const ReportHazardWizard: React.FC<ReportHazardWizardProps> = ({ isOpen, 
                   }}
                   disabled={geoLoading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-sm rounded-lg flex items-center space-x-2 transition-colors"
+                  title="Browser location may not be accurate. You can search or click on map to adjust."
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
@@ -295,8 +303,11 @@ export const ReportHazardWizard: React.FC<ReportHazardWizardProps> = ({ isOpen, 
                   <span className="text-xs text-red-400">{geoError}</span>
                 )}
                 {useCurrentLocation && latitude && longitude && (
-                  <span className="text-xs text-green-400">✓ Using your location</span>
+                  <span className="text-xs text-yellow-400">⚠️ Verify location accuracy</span>
                 )}
+              </div>
+              <div className="text-xs text-slate-400 mb-2">
+                💡 Click on the map to pinpoint your exact location or search for your city
               </div>
               <div className="relative">
                 <input 

@@ -31,6 +31,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
       },
     });
@@ -44,9 +45,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +role');
     if (!user) {
       res.status(401).json({ message: 'Invalid email or password' });
+      return;
+    }
+
+    // Check if account is active
+    if (!user.isActive) {
+      res.status(403).json({ message: 'Account is suspended' });
       return;
     }
 
@@ -66,6 +73,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
       },
     });

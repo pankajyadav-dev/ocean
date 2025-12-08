@@ -12,7 +12,8 @@ export interface IHazardReport extends Document {
   timestamp: Date;
   imageUrl?: string;
   verified: boolean;
-  verificationStatus: 'unverified' | 'ai-verified' | 'admin-verified';
+  verificationStatus: 'unverified' | 'ai-verified' | 'admin-verified' | 'declined';
+  declineReason?: string;
   verifiedBy?: mongoose.Types.ObjectId;
   verifiedAt?: Date;
   createdAt: Date;
@@ -68,8 +69,12 @@ const HazardReportSchema: Schema = new Schema({
   },
   verificationStatus: {
     type: String,
-    enum: ['unverified', 'ai-verified', 'admin-verified'],
+    enum: ['unverified', 'ai-verified', 'admin-verified', 'declined'],
     default: 'unverified',
+  },
+  declineReason: {
+    type: String,
+    default: '',
   },
   verifiedBy: {
     type: Schema.Types.ObjectId,

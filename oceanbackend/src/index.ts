@@ -12,6 +12,7 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import userRoutes from './routes/userRoutes';
 import socialMediaRoutes from './routes/socialMediaRoutes';
 import governmentAlertsRoutes from './routes/governmentAlertsRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -45,7 +46,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static('uploads'));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -55,29 +56,48 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/social-media', socialMediaRoutes);
 app.use('/api/government', governmentAlertsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ message: 'OceanGuard API is running', status: 'healthy' });
 });
 
-// Serve frontend static files in production
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, '../../OceanFrontend/dist');
-  
-  // Serve static files
-  app.use(express.static(frontendPath));
-  
-  // Handle React Router - send all non-API requests to index.html
-  app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-} else {
-  // Development mode - API only
-  app.use((req: Request, res: Response) => {
-    res.status(404).json({ message: 'Route not found' });
-  });
-}
+// Geocoding proxy endpoint to avoid CORS issues
+app.get('/api/geocode/reverse', async (req: Request, res: Response) => {
+  try {
+    const { lat, lon } = req.query;
+    
+    if (!lat || !lon) {
+      return res.status(400).json({ error: 'Missing lat or lon parameter' });
+    }
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'OceanGuard/1.0 (https://oceanguard.app)',
+          'Accept': 'application/json',
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Geocoding service error');
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    res.status(500).json({ error: 'Failed to fetch location data' });
+  }
+});
+
+// 404 handler for unknown routes
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
 // Error handler
 app.use((err: any, req: Request, res: Response, next: any) => {

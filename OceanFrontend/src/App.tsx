@@ -11,6 +11,9 @@ import { SignupPage } from './components/SignupPage';
 import { ProfilePage } from './components/ProfilePage';
 import { NotificationCenter } from './components/NotificationCenter';
 import { GovernmentAlertsPage } from './components/GovernmentAlertsPage';
+import { AdminDashboard } from './components/AdminDashboard';
+import { ManageReports } from './components/ManageReports';
+import { ManageUsers } from './components/ManageUsers';
 import { Page, type User } from './types';
 import { io, Socket } from 'socket.io-client';
 
@@ -25,11 +28,9 @@ const AppContent: React.FC = () => {
 
   // Initialize Socket.io connection
   useEffect(() => {
-    // In production, connect to same server. In dev, use localhost:3000
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 
-                     (import.meta.env.PROD ? window.location.origin : 'http://localhost:3000');
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
     const socketConnection = io(socketUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       path: '/socket.io'
     });
 
@@ -86,7 +87,9 @@ const AppContent: React.FC = () => {
     const storedUser = localStorage.getItem('user');
     if (storedToken && storedUser) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      console.log('Loaded user from localStorage:', parsedUser);
     }
   }, []);
 
@@ -108,7 +111,9 @@ const AppContent: React.FC = () => {
   const handleLogin = (email: string, authToken: string) => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      console.log('User logged in:', parsedUser);
     }
     setToken(authToken);
     navigate('/map');
@@ -141,6 +146,12 @@ const AppContent: React.FC = () => {
         <Route path="/signup" element={<SignupPage onNavigate={handleNavigate} onLogin={handleLogin} />} />
         <Route path="/profile" element={user ? <ProfilePage onNavigate={handleNavigate} user={user} onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/government-alerts" element={<GovernmentAlertsPage onNavigate={handleNavigate} user={user} />} />
+        
+        {/* Admin Routes - Protected */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/reports" element={<ManageReports />} />
+        <Route path="/admin/users" element={<ManageUsers />} />
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       

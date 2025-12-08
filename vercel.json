@@ -13,24 +13,16 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "oceanbackend/api/index.ts"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "oceanbackend/uploads/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "OceanFrontend/dist/$1"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/oceanbackend/api/index.ts"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "/oceanbackend/uploads/:path*"
     }
-  ]
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

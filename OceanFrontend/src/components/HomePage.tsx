@@ -70,6 +70,9 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, user, onLogout }
           <div className="flex items-center space-x-4">
             {user ? (
               <>
+                {user.role === 'admin' && (
+                  <a href="/admin" className="text-sm text-blue-400 hover:text-blue-300 font-medium">Admin Panel</a>
+                )}
                 <button onClick={() => onNavigate(Page.PROFILE)} className="text-sm text-slate-300 hover:text-white">Profile</button>
                 <span className="text-sm text-slate-300">Welcome, {user.name}</span>
                 <button onClick={onLogout} className="text-sm bg-red-600 hover:bg-red-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors">Logout</button>

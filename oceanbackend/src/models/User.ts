@@ -6,6 +6,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   phone?: string;
+  role: 'user' | 'admin';
+  isActive: boolean;
   location?: {
     type: string;
     coordinates: number[];
@@ -44,6 +46,15 @@ const UserSchema: Schema = new Schema({
       },
       message: 'Please provide a valid phone number'
     }
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
   },
   location: {
     type: {
